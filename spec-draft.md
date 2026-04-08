@@ -305,3 +305,93 @@ Dự án cần được đánh giá lại toàn diện hoặc dừng khẩn cấ
 2. **An toàn (Safety/Trust):** Tỉ lệ AI nhận diện sai triệu chứng nguy kịch (False Negative) hoặc bị "Ảo giác" (Hallucination) vượt mức **0.1%**.
 3. **Thị trường (Retention):** Tỉ lệ rời bỏ ứng dụng (Churn rate) trong tháng đầu tiên vượt mức **60%**.
 4. **Pháp lý:** Không đáp ứng được các bài kiểm tra bảo mật dữ liệu y tế (VD: HIPAA hoặc quy định của Bộ Y tế).
+
+---
+
+# 6. Mini AI Specs (Hackathon 1 Day)
+
+## 6.1. Tech Stack (Pick & Code)
+
+**Frontend:** React/Vue + Tailwind  
+**Backend:** FastAPI (Python) / Node.js  
+**LLM:** Claude API / GPT-4 / Ollama (local)  
+**OCR:** Pytesseract (free, ~5 lines code)  
+**DB:** SQLite (no setup) or PostgreSQL  
+**Notifications:** Firebase or simple HTTP polling  
+
+---
+
+## 6.2. 3 Prompts (Copy-Paste)
+
+### **Prompt 1: Extract thuốc từ ảnh**
+```
+Từ đơn thuốc Việt, trích: tên thuốc, liều (mg), số viên, lần/ngày, ngày.
+JSON: {"drug":"Paracetamol","dosage":"500mg","qty":1,"freq":3,"days":7,"confidence":0.9}
+Nếu confidence < 0.8 → {"status":"unclear","ask_human":true}
+Không bịa tên! Chữ mờ → "UNCLEAR"
+```
+
+### **Prompt 2: Triage triệu chứng**
+```
+Hỏi: "Triệu chứng gì?" → Hỏi 1-2 câu follow-up → Quyết định mức độ.
+Luật cứng: sốt≥40°C + co giật = RED / chest pain = RED / sốt + đau đầu = YELLOW / khác = GREEN
+JSON: {"level":"GREEN/YELLOW/RED","confidence":0.85,"reason":"...","action":"tại nhà/gọi bác sĩ/cấp cứu"}
+```
+
+### **Prompt 3: Daily check**
+```
+Hỏi: "Hôm nay sức khỏe thế nào sau dùng thuốc?"
+Input bình thường → "Tuyệt, giữ nguyên!"
+Input lạ → Hỏi "Mức độ 1-10?" rồi log vào history
+```
+
+---
+
+## 6.3. Super Simple DB (SQLite)
+
+```sql
+CREATE TABLE patients (id, name, phone, created_at);
+CREATE TABLE medications (id, patient_id, drug, dosage, freq, days, confidence, active);
+CREATE TABLE reminders (id, patient_id, med_id, time, last_confirmed, snooze_count, status);
+CREATE TABLE symptoms (id, patient_id, text, level, confidence, created_at);
+CREATE TABLE corrections (id, patient_id, type, original, corrected, created_at);
+```
+
+---
+
+## 6.4. API Routes (Min viable)
+
+```
+POST /medications/extract → {image_base64} → {drug, dosage, freq, confidence}
+POST /symptoms/triage → {text} → {level, confidence, action}
+POST /reminders/confirm → {med_id} → {ok}
+GET /patient/{id}/history → {medications, symptoms, reminders}
+```
+
+---
+
+## 6.5. Core Logic (Priority)
+
+1. **Medication extraction:** Image → Tesseract (OCR) → Prompt → JSON
+2. **Symptom triage:** Text → Prompt (with hard rules) → Level (GREEN/YELLOW/RED)
+3. **Reminder scheduler:** Every 5 min, check if med_time ≈ now → Send notification
+4. **Correction loop:** User edits → Save to corrections table → Log as signal
+
+---
+
+## 6.6. MVP (Cut corners, ship fast)
+
+- ✅ Static "database" (CSV or hardcoded) if setup takes too long
+- ✅ No fancy UI - just form + buttons
+- ✅ LLM API over local model (faster iteration, no GPU)
+- ✅ Notification = console log or simple email (not real-time push)
+- ✅ Auth = skip (or super simple: patient_id in URL)
+- ✅ Test with 3-5 sample patients
+
+**Minimum to demo:**
+- Upload prescription → Extract → Show extracted data
+- Type symptom → Get triage level + recommendation
+- Confirm med → Log adherence
+- Show correction log
+
+**Time budget:** 6-7 hours coding + 1-2 hours demo prep
