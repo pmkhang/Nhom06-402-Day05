@@ -48,6 +48,78 @@ Có: high marginal value. Dữ liệu tuân thủ/liệu trình và pattern snoo
 
 --- 
 
+# User Stories — AI Chăm Sóc Sức Khỏe (Vinmec)
+
+Mỗi feature AI chính = 1 bảng. AI trả lời xong → chuyện gì xảy ra? Viết cả 4 trường hợp.
+
+---
+
+## Feature 1: Nhắc nhở uống thuốc (Spam Notification)
+
+**Trigger:** Đến giờ uống thuốc theo đơn → AI gửi thông báo lên Web/App mỗi 5 phút → Chờ user nhấn "Đã uống".
+
+| Path | Câu hỏi thiết kế | Mô tả |
+|------|-------------------|-------|
+| **Happy** — AI đúng, tự tin | User thấy gì? Flow kết thúc ra sao? | 08:00 hiện Pop-up: *"Đã đến giờ uống 1 viên Kháng sinh A"*. User nhấn **"Đã uống"** → Hệ thống dừng gửi tin, ghi chú vào lịch sử: *"Hoàn thành lúc 08:02"*. |
+| **Low-confidence** — AI không chắc | System báo "không chắc" bằng cách nào? User quyết thế nào? | User nhấn **"Bỏ qua"** hoặc im lặng sau 3 lần nhắc. AI gửi tin nhắn: *"Bạn có gặp khó khăn gì (buồn nôn, quên mang thuốc...) không?"* kèm nút **"Trợ giúp"**. Ngoài ra, mỗi thông báo có nút **"Trì hoãn 15 phút"** (Snooze) để tránh gây ức chế khi user đang họp hoặc lái xe. |
+| **Failure** — AI sai | User biết AI sai bằng cách nào? Recover ra sao? | Thông báo hiện *"Uống 2 viên"* trong khi vỏ thuốc ghi *"1 viên"*. User thấy mâu thuẫn → Nhấn nút **"Sai liều lượng"** ngay trên thông báo nhắc nhở. |
+| **Correction** — user sửa | User sửa bằng cách nào? Data đó đi vào đâu? | User chụp ảnh đơn giấy để AI quét lại hoặc chọn **"Sửa lịch"**. Data gửi về bộ phận CSKH để kiểm tra đơn gốc trên hệ thống Vinmec. ⚠️ Mọi sửa đổi liều lượng phải được **bác sĩ hoặc dược sĩ duyệt** trước khi lịch nhắc mới có hiệu lực. |
+
+---
+
+## Feature 2: Hỏi thăm triệu chứng hằng ngày
+
+**Trigger:** 20:00 hằng ngày, Chatbot chủ động nhắn: *"Hôm nay sức khỏe của bạn sau khi dùng thuốc thế nào?"*
+
+| Path | Câu hỏi thiết kế | Mô tả |
+|------|-------------------|-------|
+| **Happy** — AI đúng, tự tin | User thấy gì? Flow kết thúc ra sao? | User chọn **"Bình thường"**. AI phản hồi: *"Rất tốt, hãy tiếp tục duy trì!"*. Flow kết thúc, dữ liệu được lưu vào báo cáo theo dõi sức khỏe tuần. |
+| **Low-confidence** — AI không chắc | System báo "không chắc" bằng cách nào? User quyết thế nào? | User nhập: *"Cũng hơi mệt"*. AI không rõ mức độ nguy hiểm → Hiện **thang điểm 1–10** để user đánh giá mức độ mệt và liệt kê thêm các biểu hiện đi kèm để user xác nhận. |
+| **Failure** — AI sai | User biết AI sai bằng cách nào? Recover ra sao? | User báo *"Đau bụng dữ dội"*, AI lại phản hồi *"Hãy nghỉ ngơi thêm"*. User thấy tình trạng tệ hơn → Nhấn nút **"Kết nối nhân viên y tế khẩn cấp" (SOS)**. Các triệu chứng AI bỏ lỡ được gắn tag để đào tạo lại NLP hằng tuần. |
+| **Correction** — user sửa | User sửa bằng cách nào? Data đó đi vào đâu? | User đính chính: *"Không phải mệt bình thường mà là phát ban"*. AI cập nhật lại trạng thái thành **"Phản ứng phụ"** và log vào hồ sơ bệnh án điện tử của bệnh nhân. |
+
+---
+
+## Feature 3: Đề cử bệnh viện gần nhất (khi có triệu chứng đặc biệt)
+
+**Trigger:** AI nhận diện từ khóa nguy hiểm (co giật, khó thở, sốt cao >40°C) từ câu trả lời của user.
+
+| Path | Câu hỏi thiết kế | Mô tả |
+|------|-------------------|-------|
+| **Happy** — AI đúng, tự tin | User thấy gì? Flow kết thúc ra sao? | AI báo: *"Triệu chứng của bạn cần xử lý y tế ngay"*. Hiện **bản đồ 3 bệnh viện/phòng khám gần nhất** (ưu tiên Vinmec) kèm nút **"Gọi cấp cứu"**. |
+| **Low-confidence** — AI không chắc | System báo "không chắc" bằng cách nào? User quyết thế nào? | Triệu chứng cần chuyên khoa sâu (ví dụ: đau mắt đột ngột). AI báo: *"Chúng tôi tìm thấy các phòng khám đa khoa, nhưng **khuyên bạn nên đến bệnh viện có khoa Mắt**"*. |
+| **Failure** — AI sai | User biết AI sai bằng cách nào? Recover ra sao? | AI đề xuất phòng khám đã đóng cửa hoặc quá xa. User xem bản đồ thấy thời gian di chuyển >1 tiếng → Nhấn **"Tìm địa điểm khác"** hoặc **"Cập nhật vị trí"**. |
+| **Correction** — user sửa | User sửa bằng cách nào? Data đó đi vào đâu? | User chọn **"Vị trí hiện tại không đúng"** và định vị lại trên bản đồ. Data GPS này được dùng để **tối ưu thuật toán gợi ý** cơ sở y tế theo bán kính thực tế. |
+
+---
+
+## Lưu ý chung cho dự án
+
+- **Snooze notification:** Nút "Trì hoãn 15 phút" là bắt buộc để tránh gây ức chế khi user đang bận.
+- **Duyệt liều lượng:** Mọi Correction về thuốc (Feature 1) phải qua bác sĩ/dược sĩ trước khi có hiệu lực — không tự động áp dụng.
+- **Feedback Loop:** Các triệu chứng "đặc biệt" mà AI bỏ lỡ phải được gắn tag và đưa vào pipeline **retrain NLP hằng tuần**.
+- **Path "Failure" là quan trọng nhất:** Nếu user không biết AI sai → nguy hiểm, đặc biệt trong bối cảnh y tế.
+
+
+---
+
+## 3. Eval metrics + threshold
+
+**Optimize precision hay recall?** ☑ Precision · ☐ Recall
+
+**Tại sao?** Nếu bệnh nhân nảy sinh tâm lý ỷ lại và tin tưởng AI 100% mà không đối chiếu đơn thuốc gốc, việc AI nhắc sai tên thuốc hoặc sai liều lượng (False Positive) sẽ dẫn đến tình trạng ngộ độc thuốc, đe dọa trực tiếp tính mạng. Trong y khoa, "Thà không nhắc, còn hơn hướng dẫn sai".
+
+**Nếu sai ngược lại thì chuyện gì xảy ra?** Nếu ưu tiên Recall (cố gắng không bỏ sót bất kỳ liều nào), AI có thể "ảo giác" (hallucinate) và tự bịa ra các cữ thuốc không tồn tại hoặc trích xuất nhầm đơn của người khác. Hệ quả là bệnh nhân có nguy cơ uống quá liều. Dù quên liều (False Negative) cũng làm giảm hiệu quả điều trị, nhưng hướng xử lý khi quên liều thường an toàn hơn (bỏ qua liều đã quên nếu sát giờ uống tiếp theo).
+
+| Metric | Threshold | Red flag (dừng khi) |
+|--------|-----------|---------------------|
+| **Độ chính xác thông tin lâm sàng (Clinical Precision):** Tỷ lệ thông báo nhắc thuốc chứa thông tin chính xác tuyệt đối 100% (đúng tên thuốc, đúng hàm lượng, đúng số viên/ml) so với đơn thuốc gốc. | ≥ 99.9% | < 98% (Hoặc dừng toàn bộ hệ thống ngay lập tức nếu phát hiện dù chỉ 1 ca AI nhắc sai liều lượng hoặc sai tên thuốc gây nguy hiểm lâm sàng). |
+| **Tỷ lệ "Từ chối tự động" (Low-confidence reject rate):** Khi AI trích xuất chữ viết tay mờ hoặc đơn thuốc có cấu trúc phức tạp mà độ tự tin thấp, AI phải tự động "báo lỗi" và yêu cầu Điều dưỡng/Dược sĩ kiểm tra tay, thay vì cố gắng đoán bừa. | ≥ 95% | Tỷ lệ AI đoán sai nhưng lại báo độ tự tin cao (High-confidence failures) xuất hiện > 0.5%. |
+| **Tỷ lệ xác nhận đối chiếu chéo (Cross-check Adherence):** Số lượt bệnh nhân xác nhận "Đã kiểm tra lại với đơn thuốc vật lý" trước khi bấm "Đã uống" trên ứng dụng. | ≥ 80% | < 60% (Cảnh báo người dùng đang bắt đầu auto nhấn "đã kiểm tra" và tin tưởng AI một cách mù quáng. Cần thay đổi UI/UX để ép người dùng phải nhìn lại đơn). |
+
+
+---
+
 ### Top 3 Failure modes (Trigger / Hậu quả/ Mitigation)
 
 # 1. Sai triage (phân loại triệu chứng)
@@ -192,3 +264,44 @@ Có: high marginal value. Dữ liệu tuân thủ/liệu trình và pattern snoo
 
 * Chỉ trả lời từ RAG (no doc → no answer)
 
+---
+
+## Phân tích ROI (3 Kịch bản)
+
+Phân tích Tỷ suất Hoàn vốn (Return on Investment - ROI) dựa trên tương quan giữa chi phí (phát triển AI, Cloud, vận hành) và giá trị tạo ra (doanh thu thuê bao, giảm chi phí tái nhập viện và bồi thường bảo hiểm).
+
+### 5.1. Kịch bản Thận trọng (Conservative)
+* **Giả định:** Người dùng có mức độ tương tác thấp, AI chủ yếu hoạt động như một công cụ nhắc nhở uống thuốc cơ bản.
+* **Tác động lâm sàng:** Giảm **5-8%** tỉ lệ tái nhập viện.
+* **Mô hình kinh doanh:** B2C (Thu phí người dùng cuối - Freemium).
+* **Kết quả tài chính:**
+  * Chi phí thu hút khách hàng (CAC) cao hơn giá trị vòng đời (LTV) trong giai đoạn đầu.
+  * Thời gian hòa vốn: **18 - 24 tháng**.
+  * **ROI dự kiến:** **10% - 15%**.
+
+### 5.2. Kịch bản Thực tế (Realistic)
+* **Giả định:** AI tích hợp tốt với hệ thống EHR của bệnh viện; khả năng NLP xử lý tiếng Việt y tế đạt chuẩn giúp phân loại triệu chứng (Triage) chính xác.
+* **Tác động lâm sàng:** Giảm **15-20%** tỉ lệ tái nhập viện.
+* **Mô hình kinh doanh:** B2B / B2B2C (Cung cấp giải pháp cho Bệnh viện và Công ty Bảo hiểm).
+* **Kết quả tài chính:**
+  * Khách hàng doanh nghiệp tiết kiệm đáng kể chi phí giường bệnh và tiền chi trả bảo hiểm.
+  * Thời gian hòa vốn: **12 tháng**.
+  * **ROI dự kiến:** **40% - 60%**.
+
+### 5.3. Kịch bản Lạc quan (Optimistic)
+* **Giả định:** Sản phẩm trở thành "Digital Front Door" (Điểm chạm y tế đầu tiên). Hệ thống đạt được hiệu ứng "Data Flywheel", dùng dữ liệu lớn để dự báo sớm biến chứng.
+* **Tác động lâm sàng:** Giảm **>30%** tỉ lệ tái nhập viện; Tỉ lệ tuân thủ thuốc **>90%**.
+* **Mô hình kinh doanh:** Hệ sinh thái dữ liệu (Data Ecosystem). Hợp tác với hãng dược để giám sát tác dụng phụ của thuốc (Post-market surveillance).
+* **Kết quả tài chính:**
+  * Đạt biên lợi nhuận cực cao nhờ giá trị từ tập dữ liệu hành vi sức khỏe.
+  * Thời gian hòa vốn: **< 9 tháng**.
+  * **ROI dự kiến:** **> 150%**.
+
+---
+
+### 5.4. Kill Criteria (Tiêu chí dừng dự án/Pivot)
+Dự án cần được đánh giá lại toàn diện hoặc dừng khẩn cấp (Kill) nếu vi phạm các ngưỡng sau:
+1. **Chỉ số Y tế:** Sau 6 tháng thử nghiệm, tỉ lệ tuân thủ điều trị không tăng tối thiểu **10%** so với nhóm không dùng app.
+2. **An toàn (Safety/Trust):** Tỉ lệ AI nhận diện sai triệu chứng nguy kịch (False Negative) hoặc bị "Ảo giác" (Hallucination) vượt mức **0.1%**.
+3. **Thị trường (Retention):** Tỉ lệ rời bỏ ứng dụng (Churn rate) trong tháng đầu tiên vượt mức **60%**.
+4. **Pháp lý:** Không đáp ứng được các bài kiểm tra bảo mật dữ liệu y tế (VD: HIPAA hoặc quy định của Bộ Y tế).
