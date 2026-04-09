@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #004225;
+  --color-danger: #ff4d4d;
+  --color-warning: #ffb020;
+  --color-surface: #f4f8f6;
+  --radius-card: 12px;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  background: radial-gradient(circle at top right, #d8efe4 0%, var(--color-surface) 36%);
+}

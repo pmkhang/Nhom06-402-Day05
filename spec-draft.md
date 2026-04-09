@@ -314,7 +314,7 @@ Dự án cần được đánh giá lại toàn diện hoặc dừng khẩn cấ
 
 **Frontend:** React/Vue + Tailwind  
 **Backend:** FastAPI (Python) / Node.js  
-**LLM:** Claude API / GPT-4 / Ollama (local)  
+**LLM:** OpenAI API / Ollama (local)  
 **OCR:** Pytesseract (free, ~5 lines code)  
 **DB:** SQLite (no setup) or PostgreSQL  
 **Notifications:** Firebase or simple HTTP polling  
