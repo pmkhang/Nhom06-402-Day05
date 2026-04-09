@@ -36,6 +36,26 @@ function createBrowserUuid() {
   return `user_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
+function getCurrentMinutesOfDay() {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function parseDueTimeToMinutes(dueTime: string) {
+  const [hoursRaw, minutesRaw] = dueTime.split(":");
+  const hours = Number(hoursRaw);
+  const minutes = Number(minutesRaw);
+
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+    return null;
+  }
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+
+  return hours * 60 + minutes;
+}
+
 export function TodayTasksPanel() {
   const [userId, setUserId] = useState<string>("");
   const [tasks, setTasks] = useState<TodayTask[]>([]);
@@ -48,6 +68,7 @@ export function TodayTasksPanel() {
   const [editingId, setEditingId] = useState<string>("");
   const [editTitle, setEditTitle] = useState("");
   const [editDueTime, setEditDueTime] = useState("");
+  const [currentMinutes, setCurrentMinutes] = useState<number>(getCurrentMinutesOfDay());
 
   useEffect(() => {
     const existing = window.localStorage.getItem(LOCAL_USER_KEY);
@@ -64,6 +85,16 @@ export function TodayTasksPanel() {
     if (!userId) return;
     void fetchTasks(userId);
   }, [userId]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentMinutes(getCurrentMinutesOfDay());
+    }, 60 * 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const sortedTasks = useMemo(
     () => [...tasks].sort((a, b) => a.dueTime.localeCompare(b.dueTime)),
@@ -221,22 +252,30 @@ export function TodayTasksPanel() {
           </p>
         ) : null}
 
-      <ol className="mt-4 max-h-[70vh] space-y-3 overflow-y-auto pr-1">
-        {loading ? <li className="text-sm text-slate-500">Đang tải lịch...</li> : null}
+      <ol className="mt-4 grid max-h-[70vh] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+        {loading ? <li className="col-span-full text-sm text-slate-500">Đang tải lịch...</li> : null}
 
         {!loading && sortedTasks.length === 0 ? (
-          <li className="rounded-2xl border border-emerald-900/10 bg-white p-3 text-sm text-slate-500">
+          <li className="col-span-full rounded-2xl border border-emerald-900/10 bg-white p-3 text-sm text-slate-500">
             Chưa có lịch nào cho hôm nay.
           </li>
         ) : null}
 
         {sortedTasks.map((task) => {
           const isEditing = editingId === task.id;
+          const dueMinutes = parseDueTimeToMinutes(task.dueTime);
+          const isOverdue =
+            task.status !== "DONE" && dueMinutes !== null && dueMinutes < currentMinutes;
 
           return (
             <li
               key={task.id}
-              className="rounded-2xl border border-emerald-900/10 bg-[linear-gradient(165deg,#ffffff_0%,#f8fcfa_100%)] p-3 shadow-sm"
+              className={[
+                "rounded-2xl border p-3 shadow-sm",
+                isOverdue
+                  ? "border-amber-300 bg-[linear-gradient(165deg,#fffdf5_0%,#fff8df_100%)]"
+                  : "border-emerald-900/10 bg-[linear-gradient(165deg,#ffffff_0%,#f8fcfa_100%)]",
+              ].join(" ")}
             >
               {isEditing ? (
                 <div className="space-y-2 rounded-xl border border-emerald-900/10 bg-white p-2.5">
@@ -286,14 +325,26 @@ export function TodayTasksPanel() {
               ) : (
                 <>
                   <div className="flex items-start justify-between gap-2">
-                    <span className="inline-flex rounded-full border border-emerald-900/15 bg-white px-2.5 py-1 text-[11px] font-semibold tracking-wide text-slate-500">
+                    <span
+                      className={[
+                        "inline-flex rounded-full border bg-white px-2.5 py-1 text-[11px] font-semibold tracking-wide",
+                        isOverdue ? "border-amber-300 text-amber-700" : "border-emerald-900/15 text-slate-500",
+                      ].join(" ")}
+                    >
                       {task.dueTime}
                     </span>
-                    <span
-                      className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusTone[task.status]}`}
-                    >
-                      {statusLabel[task.status]}
-                    </span>
+                    <div className="flex flex-wrap items-center justify-end gap-1.5">
+                      {isOverdue ? (
+                        <span className="inline-flex rounded-full border border-amber-300 bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+                          Quá giờ
+                        </span>
+                      ) : null}
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusTone[task.status]}`}
+                      >
+                        {statusLabel[task.status]}
+                      </span>
+                    </div>
                   </div>
                   <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{task.title}</p>
 

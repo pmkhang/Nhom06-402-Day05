@@ -1,12 +1,4 @@
-type PrismaClientAny = {
-  todayTask: {
-    findMany: (args: unknown) => Promise<unknown>;
-    create: (args: unknown) => Promise<unknown>;
-    findUnique: (args: unknown) => Promise<unknown>;
-    update: (args: unknown) => Promise<unknown>;
-    delete: (args: unknown) => Promise<unknown>;
-  };
-};
+type PrismaClientAny = any;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClientAny | undefined;

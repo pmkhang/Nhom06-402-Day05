@@ -1,6 +1,10 @@
 import { apiError } from "@/lib/server/errors";
 import { apiOk } from "@/lib/server/http";
+import { ensureDailyTaskCronStarted } from "@/lib/server/daily-task-cron";
 import { getPrisma } from "@/lib/server/prisma";
+import { ensureDailyTaskReset } from "@/lib/server/today-task-reset";
+
+ensureDailyTaskCronStarted();
 
 type TaskStatus = "TODO" | "UPCOMING" | "DONE";
 
@@ -25,6 +29,7 @@ export async function GET(request: Request) {
     }
 
     const prisma = await getPrisma();
+    await ensureDailyTaskReset(prisma);
     const tasks = await prisma.todayTask.findMany({
       where: { userId },
       orderBy: [{ dueTime: "asc" }, { createdAt: "asc" }],
@@ -58,6 +63,7 @@ export async function POST(request: Request) {
     }
 
     const prisma = await getPrisma();
+    await ensureDailyTaskReset(prisma);
     const task = await prisma.todayTask.create({
       data: {
         userId,

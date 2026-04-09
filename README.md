@@ -31,36 +31,54 @@
 
 ---
 
-## 🚀 Run local
+## 🚀 Cách chạy project (Local)
 
-### Prerequisites
-- [uv](https://github.com/astral-sh/uv) (for Backend)
-- [bun](https://bun.sh/) (for Frontend)
+Project hiện tại là app Next.js monolithic nằm trong thư mục `vinmec-healthcare`.
 
-### 1. Project structure & Env
-Clone the repository and prepare your environment:
+### 1. Yêu cầu môi trường
+- Node.js `>= 20`
+- npm / pnpm / bun (ví dụ bên dưới dùng `npm`)
+
+### 2. Cài dependencies
 ```bash
-git clone <repo-url>
-cd Nhom06-402-Day05
+cd vinmec-healthcare
+npm install
+```
 
-# Setup environment variables
+### 3. Cấu hình môi trường
+```bash
 cp .env.example .env
 ```
-*(Update `.env` with your actual API keys and secrets)*
 
-### 2. Run Backend
+Cập nhật tối thiểu trong `.env`:
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL` (mặc định đã có: `gpt-4o-mini`)
+- `DATABASE_URL` (mặc định dùng SQLite local: `file:../../database/dev.db`)
+- `CRON_SECRET` (dùng cho endpoint cron reset task)
+
+### 4. Khởi tạo database (Prisma)
 ```bash
-cd backend
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-# uv pip install -r requirements.txt (Assuming dependencies are specified)
-# Run the FastAPI server
-uvicorn main:app --reload
+npm run prisma:migrate
+npm run prisma:generate
 ```
 
-### 3. Run Frontend
+### 5. Chạy server dev
 ```bash
-cd frontend
-bun install
-bun run dev
+npm run dev
+```
+
+Mở trình duyệt:
+- `http://localhost:3000`
+
+Trang chính:
+- Chat: `/chat`
+- Today tasks: `/today`
+
+### 6. Cron reset task theo ngày (tuỳ chọn)
+Hệ thống đã có cơ chế reset task qua ngày trong server.  
+Bạn cũng có thể trigger thủ công:
+
+```bash
+curl -X POST "http://localhost:3000/api/cron/daily-task-reset" \
+  -H "Authorization: Bearer <CRON_SECRET>"
 ```

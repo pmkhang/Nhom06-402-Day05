@@ -1,6 +1,10 @@
 import { apiError } from "@/lib/server/errors";
 import { apiOk } from "@/lib/server/http";
+import { ensureDailyTaskCronStarted } from "@/lib/server/daily-task-cron";
 import { getPrisma } from "@/lib/server/prisma";
+import { ensureDailyTaskReset } from "@/lib/server/today-task-reset";
+
+ensureDailyTaskCronStarted();
 
 type TaskStatus = "TODO" | "UPCOMING" | "DONE";
 
@@ -33,6 +37,7 @@ export async function PUT(
     }
 
     const prisma = await getPrisma();
+    await ensureDailyTaskReset(prisma);
     const existing = await prisma.todayTask.findUnique({ where: { id } });
     if (!existing || existing.userId !== userId) {
       return apiError(404, {
@@ -75,6 +80,7 @@ export async function DELETE(
     }
 
     const prisma = await getPrisma();
+    await ensureDailyTaskReset(prisma);
     const existing = await prisma.todayTask.findUnique({ where: { id } });
     if (!existing || existing.userId !== userId) {
       return apiError(404, {
