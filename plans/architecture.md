@@ -4,13 +4,13 @@ This document describes MVP architecture aligned with trust/safety constraints i
 
 ## 1. Layers
 
-### Frontend (React + Tailwind)
+### Client (Next.js App Router + Tailwind)
 - Reminder timeline, prescription review, daily check chat, emergency panel.
 - Explicit safety UI: source display, confidence labels, cross-check checkbox, SOS action.
 
-### Backend (FastAPI + SQLModel)
-- REST API for extraction, reminders, triage, correction workflow, metrics.
-- **Reminder scheduler**: APScheduler running inside FastAPI process (no separate worker needed for MVP) — checks due reminders every 5 minutes.
+### Server (Next.js Route Handlers + Prisma)
+- API route handlers for extraction, reminders, triage, correction workflow, metrics.
+- **Reminder scheduler**: cron/background job running in Next.js runtime (no separate worker needed for MVP) — checks due reminders every 5 minutes.
 - Approval workflow service for pharmacist/doctor review on medication corrections.
 
 ### AI Engine (OCR + LLM + Rule Layer)
@@ -18,7 +18,7 @@ This document describes MVP architecture aligned with trust/safety constraints i
 - LLM prompt layer: extraction, triage, daily-check.
 - Rule layer overrides model output for critical symptoms and uncertainty escalation.
 
-### Data Layer (SQLite MVP)
+### Data Layer (SQLite + Prisma for MVP)
 - Tables: medications, reminders, symptom_logs, correction_logs, facility_cache.
 - Idempotency + audit trail for reminder and correction events.
 
@@ -62,7 +62,7 @@ graph TD
 
 - **Auth (MVP)**: `X-Patient-ID` header on every patient endpoint. Reviewer role uses `X-Reviewer-Token` (hardcoded secret in `.env`).
 - RBAC: patient can only access own data; medical reviewer role for approvals.
-- LLM never accesses DB directly; it only receives curated input from backend.
+- LLM never accesses DB directly; it only receives curated input from server route handlers.
 - PHI masking in logs; strict output schema parsing to guard against prompt injection.
 
 ## 5. Reliability Controls

@@ -1,6 +1,6 @@
 # Database Schema Specification
 
-SQLite with SQLModel (SQLAlchemy) for MVP. All trust/safety fields required by `spec-draft.md` are included.
+SQLite with Prisma ORM for MVP. All trust/safety fields required by `spec-draft.md` are included.
 
 ## 1. Core Tables
 
