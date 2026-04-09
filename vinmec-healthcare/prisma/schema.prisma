@@ -6,3 +6,22 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+enum TaskStatus {
+  TODO
+  UPCOMING
+  DONE
+}
+
+model TodayTask {
+  id        String     @id @default(cuid())
+  userId    String     @map("user_id")
+  title     String
+  dueTime   String     @map("due_time")
+  status    TaskStatus @default(TODO)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("today_tasks")
+}
